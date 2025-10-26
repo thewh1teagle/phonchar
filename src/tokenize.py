@@ -13,3 +13,29 @@ Binary flags:
 
 None on both consonant and vowel means silent.
 """
+from typing import List, NamedTuple
+
+
+class EncodedSample(NamedTuple):
+    char_ids: List[int]
+    consonant: List[int]
+    vowel: List[int]
+    stress: List[int]
+    flip_vowel: List[int]
+
+class Prediction(NamedTuple):
+    consonant: List[int]
+    vowel: List[int]
+    stress: List[int]
+    flip_vowel: List[int]
+
+
+def encode(text: str, ipa: str) -> EncodedSample:
+    ...
+
+def decode(text: str, preds: Prediction) -> str:
+    """
+    preds: Prediction
+    returns: IPA string (space-separated phonemes)
+    """
+    ...
