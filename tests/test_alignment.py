@@ -20,5 +20,4 @@ def read_csv(path: str):
 df = read_csv('tests/tables/basic1.csv')
 
 def test_align_word():
-
     assert align_word('', '') == []
