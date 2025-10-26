@@ -54,4 +54,3 @@ def test_align_word():
                 f"expected_ipa='{expected_ipa}' ({len(expected_ipa)} chars)\n"
                 f"aligned_ipa='{aligned_ipa}' ({len(aligned_ipa)} chars)"
             )
-test_align_word()
