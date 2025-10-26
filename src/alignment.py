@@ -69,41 +69,50 @@ def align_word(word: str, ipa: str) -> tuple[str, str]:
         )
         
         if should_check_last_char and ipa_idx < len(ipa):
-            # Get the last character
+            # Special heuristic: If last two characters are the SAME matres lectionis,
+            # the second-to-last should match (not be silent).
+            # Otherwise, check if second-to-last should be silent.
             last_char = word[-1]
-            last_char_phonemes = config.CHAR_TO_PHONEME.get(last_char, [])
             
-            # Check if last character can match what's remaining in IPA
-            last_char_can_match = False
-            for last_phoneme in last_char_phonemes:
-                temp_idx = ipa_idx
+            # If both characters are the same, don't apply the look-ahead logic
+            # (let normal matching proceed)
+            if char_key == last_char:
+                pass  # Skip the look-ahead, let it match normally
+            else:
+                # Different characters: check if last char can match and make current silent
+                last_char_phonemes = config.CHAR_TO_PHONEME.get(last_char, [])
                 
-                # Try various patterns for the last character
-                # Pattern 1: Just a standalone vowel
-                if temp_idx < len(ipa) and ipa[temp_idx] in VOWELS:
-                    last_char_can_match = True
-                    break
-                
-                # Pattern 2: [stress?] vowel consonant
-                if temp_idx < len(ipa) and ipa[temp_idx] == STRESS:
-                    temp_idx += 1
-                if temp_idx < len(ipa) and ipa[temp_idx] in VOWELS:
-                    if temp_idx + 1 + len(last_phoneme) <= len(ipa) and ipa[temp_idx + 1:temp_idx + 1 + len(last_phoneme)] == last_phoneme:
+                # Check if last character can match what's remaining in IPA
+                last_char_can_match = False
+                for last_phoneme in last_char_phonemes:
+                    temp_idx = ipa_idx
+                    
+                    # Try various patterns for the last character
+                    # Pattern 1: Just a standalone vowel
+                    if temp_idx < len(ipa) and ipa[temp_idx] in VOWELS:
+                        last_char_can_match = True
+                        break
+                    
+                    # Pattern 2: [stress?] vowel consonant
+                    if temp_idx < len(ipa) and ipa[temp_idx] == STRESS:
+                        temp_idx += 1
+                    if temp_idx < len(ipa) and ipa[temp_idx] in VOWELS:
+                        if temp_idx + 1 + len(last_phoneme) <= len(ipa) and ipa[temp_idx + 1:temp_idx + 1 + len(last_phoneme)] == last_phoneme:
+                            last_char_can_match = True
+                            break
+                    
+                    # Pattern 3: [stress?] consonant [vowel?]
+                    temp_idx = ipa_idx
+                    if temp_idx < len(ipa) and ipa[temp_idx] == STRESS:
+                        temp_idx += 1
+                    if temp_idx + len(last_phoneme) <= len(ipa) and ipa[temp_idx:temp_idx + len(last_phoneme)] == last_phoneme:
                         last_char_can_match = True
                         break
                 
-                # Pattern 3: [stress?] consonant [vowel?]
-                temp_idx = ipa_idx
-                if temp_idx < len(ipa) and ipa[temp_idx] == STRESS:
-                    temp_idx += 1
-                if temp_idx + len(last_phoneme) <= len(ipa) and ipa[temp_idx:temp_idx + len(last_phoneme)] == last_phoneme:
-                    last_char_can_match = True
-                    break
-            
-            # If last character can match, make current character silent
-            if last_char_can_match:
-                matched = True
-                phoneme_group.append(config.NONE)
+                # If last character can match, make current character silent
+                if last_char_can_match:
+                    matched = True
+                    phoneme_group.append(config.NONE)
         
         if not matched and ipa_idx < len(ipa):
             # PRIORITY 1: Try to match VOWEL + CONSONANT pattern first
