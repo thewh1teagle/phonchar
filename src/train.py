@@ -188,7 +188,7 @@ def compute_metrics(eval_pred):
 class PhonemeTrainer(Trainer):
     """Custom Trainer that handles multi-head outputs"""
     
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         """Compute loss with multi-head labels"""
         labels = inputs.pop("labels")
         outputs = model(**inputs, labels=labels)
@@ -336,6 +336,7 @@ def main():
         seed=args.seed,
         fp16=torch.cuda.is_available(),
         report_to='tensorboard',  # Enable TensorBoard logging
+        remove_unused_columns=False,  # Keep our custom columns
     )
     
     # Initialize trainer
