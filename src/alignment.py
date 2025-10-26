@@ -8,10 +8,11 @@ def align_word(word: str, ipa: str) -> list[tuple[str, str]]:
     word = normalize(word)
     
     pairs = []
+    segmented_ipa = ''
     
     word_index = 0
     ipa_index = 0
     
 
 
-    return pairs
+    return [word, segmented_ipa]
