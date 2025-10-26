@@ -10,5 +10,6 @@ Class flags:
 Binary flags:
 - stress
 - flip_vowel
-- none
+
+None on both consonant and vowel means silent.
 """
