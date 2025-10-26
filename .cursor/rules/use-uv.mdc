@@ -1,0 +1,24 @@
+---
+alwaysApply: true
+---
+
+Use uv to run commands.
+
+Example:
+```
+uv run pytest
+```
+
+Use uv to install dependencies.
+
+Example:
+```
+uv add pytest
+```
+
+Use uv to run inline python code.
+
+Example:
+```
+uv run python -c "print('Hello, World!')"
+```
