@@ -10,11 +10,10 @@ from src.alignment import align_word
 import pandas as pd
 from src.config import NONE
 from pathlib import Path
-from src.preprocess import normalize
+from src.preprocess import normalize_hebrew, normalize_ipa
 
 TABLES_DIR = Path('tests/tables')
-tables = TABLES_DIR.glob('*.csv')
-tables = [TABLES_DIR / 'basic1.csv']
+tables = list(TABLES_DIR.glob('*.csv'))
 
 def clean_ipa(ipa: str):
     """
@@ -25,13 +24,18 @@ def clean_ipa(ipa: str):
     return ipa
 
 def clean_word(word: str):
-    word = normalize(word)
+    word = normalize_hebrew(word)
     return word
 
 def read_csv(path: str):
     df = pd.read_csv(path)
     df['clean_ipa'] = df['ipa'].apply(clean_ipa)
     df['word'] = df['word'].apply(clean_word)
+
+    # normalize IPA
+    df['clean_ipa'] = df['clean_ipa'].apply(normalize_ipa)
+    df['ipa'] = df['ipa'].apply(normalize_ipa)
+    
     return df
 
 def test_align_word():

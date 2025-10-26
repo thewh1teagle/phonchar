@@ -7,7 +7,13 @@ import unicodedata
 import re
 
 
-def normalize(text: str) -> str:
+def normalize_ipa(ipa: str) -> str:
+    ipa = ipa.replace('g', 'ɡ')
+    ipa = ipa.replace('r', 'ʁ')
+    ipa = ipa.replace('x', 'χ')
+    return ipa
+
+def normalize_hebrew(text: str) -> str:
     """
     Normalize Hebrew text to Unicode NFD form
     Normalize Hebrew Geresh and Gershayim to apostrophe and double quote
