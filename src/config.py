@@ -13,8 +13,8 @@ INPUT_CHARS = [
 
 # Output
 STRESS = 'ˈ'
-VOWELS = 'aeiou'
 NONE = 'Ø'
+VOWELS = list('aeiou')
 CONSONANTS = [
     'b', 
     'v', 

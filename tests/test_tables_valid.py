@@ -9,7 +9,6 @@ from pathlib import Path
 
 TABLES_DIR = Path('tests/tables')
 tables = TABLES_DIR.glob('*.csv')
-tables = ['tests/tables/basic2.csv']
 
 
 def read_csv(path: str):
