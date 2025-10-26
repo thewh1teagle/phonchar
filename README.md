@@ -22,3 +22,8 @@ heads:
 
 ש ʃ a 0 0 0
 ל l o 1 0 0
+
+
+Datasets: 
+
+- https://huggingface.co/datasets/thewh1teagle/phonikud-phonemes-data
