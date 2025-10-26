@@ -5,6 +5,7 @@ from typing import List, Dict
 import torch
 from torch.utils.data import Dataset
 from datasets import Dataset as HFDataset
+from tqdm import tqdm
 from src.alignment import align_word
 from src.tokenize import encode
 from src.preprocess import normalize_hebrew, normalize_ipa
@@ -23,7 +24,8 @@ class PhonemeDataset(Dataset):
         """
         self.samples = []
         
-        for text, ipa in zip(texts, ipas):
+        print(f"Processing {len(texts)} samples...")
+        for text, ipa in tqdm(zip(texts, ipas), total=len(texts), desc="Encoding samples"):
             if pre_aligned:
                 # IPA is already aligned (space-separated per character)
                 # But still need to normalize characters (r→ʁ, g→ɡ, x→χ)
@@ -67,32 +69,42 @@ def prepare_dataset(input_file: str, split_ratio: float = 0.9, pre_aligned: bool
     Returns:
         (train_dataset, val_dataset) as HuggingFace Datasets
     """
+    print(f"\n{'='*60}")
+    print(f"Loading data from: {input_file}")
+    print(f"{'='*60}")
+    
     texts = []
     ipas = []
     
-    # Read file
+    # Read file with progress bar
     with open(input_file, 'r', encoding='utf-8') as f:
-        for line_num, line in enumerate(f, 1):
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            
-            parts = line.split('\t')
-            if len(parts) != 2:
-                print(f"Warning: Skipping line {line_num}, expected 2 columns, got {len(parts)}")
-                continue
-            
-            text, ipa = parts
-            texts.append(text)
-            ipas.append(ipa)
+        lines = f.readlines()
     
-    print(f"Loaded {len(texts)} samples from {input_file}")
+    print(f"Loaded {len(lines)} lines from file")
+    print("Parsing TSV...")
+    
+    for line_num, line in enumerate(tqdm(lines, desc="Parsing lines"), 1):
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        
+        parts = line.split('\t')
+        if len(parts) != 2:
+            print(f"Warning: Skipping line {line_num}, expected 2 columns, got {len(parts)}")
+            continue
+        
+        text, ipa = parts
+        texts.append(text)
+        ipas.append(ipa)
+    
+    print(f"Parsed {len(texts)} valid samples\n")
     
     # Create PyTorch dataset
     dataset = PhonemeDataset(texts, ipas, pre_aligned=pre_aligned)
     
     # Convert to HuggingFace Dataset format
-    all_samples = [dataset[i] for i in range(len(dataset))]
+    print("\nConverting to HuggingFace Dataset format...")
+    all_samples = [dataset[i] for i in tqdm(range(len(dataset)), desc="Converting samples")]
     
     # Split into train/val
     split_idx = int(len(all_samples) * split_ratio)
@@ -103,9 +115,11 @@ def prepare_dataset(input_file: str, split_ratio: float = 0.9, pre_aligned: bool
     train_dataset = HFDataset.from_list(train_samples)
     val_dataset = HFDataset.from_list(val_samples) if val_samples else None
     
-    print(f"Train samples: {len(train_dataset)}")
+    print(f"\n✅ Dataset preparation complete!")
+    print(f"   Train samples: {len(train_dataset)}")
     if val_dataset:
-        print(f"Validation samples: {len(val_dataset)}")
+        print(f"   Validation samples: {len(val_dataset)}")
+    print(f"{'='*60}\n")
     
     return train_dataset, val_dataset
 

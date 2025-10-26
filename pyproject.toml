@@ -8,6 +8,7 @@ dependencies = [
     "datasets>=4.3.0",
     "jiwer>=4.0.0",
     "pandas>=2.3.3",
+    "tensorboard>=2.20.0",
     "torch>=2.9.0",
     "transformers>=4.57.1",
 ]

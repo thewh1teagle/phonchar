@@ -1,5 +1,10 @@
 """
 Training script for phoneme prediction model
+wget https://huggingface.co/datasets/thewh1teagle/phonikud-phonemes-data/resolve/main/hedc4-phonemes_v1.txt.7z
+sudo apt install p7zip-full -y
+7z x hedc4-phonemes_v1.txt.7z
+head -n 200 hedc4-phonemes.txt > dataset.txt
+uv run python -m src.train --data dataset.txt
 """
 import argparse
 from pathlib import Path
@@ -268,7 +273,11 @@ def main():
     
     # Load and prepare datasets
     print("\nPreparing datasets...")
-    train_dataset, val_dataset = prepare_dataset(args.data, split_ratio=1.0 - args.val_split)
+    train_dataset, val_dataset = prepare_dataset(
+        args.data,
+        split_ratio=1.0 - args.val_split,
+        pre_aligned=True  # Always expect pre-aligned data
+    )
     
     # Load model config and initialize model
     print("\nInitializing model...")
@@ -304,6 +313,10 @@ def main():
     output_dir = Path(args.output)
     output_dir.mkdir(parents=True, exist_ok=True)
     
+    print(f"\n📊 TensorBoard logging enabled at: {output_dir / 'logs'}")
+    print(f"   Run: tensorboard --logdir {output_dir / 'logs'}")
+    print()
+    
     training_args = TrainingArguments(
         output_dir=str(output_dir),
         num_train_epochs=args.epochs,
@@ -322,7 +335,7 @@ def main():
         greater_is_better=True,
         seed=args.seed,
         fp16=torch.cuda.is_available(),
-        report_to='none',  # Disable wandb/tensorboard
+        report_to='tensorboard',  # Enable TensorBoard logging
     )
     
     # Initialize trainer
