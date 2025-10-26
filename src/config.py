@@ -8,39 +8,14 @@ See https://en.wikipedia.org/wiki/Help:IPA/Hebrew
 # Input
 INPUT_CHARS = [
     *'אבגדהוזחטיכךלמםנןסעפףצץקרשת',
-    r"\"'",
+    *r"\"'",
 ]
 
 # Output
 STRESS = 'ˈ'
 NONE = 'Ø'
-VOWELS = list('aeiou')
-CONSONANTS = [
-    'b', 
-    'v', 
-    'd', 
-    'h', 
-    'z', 
-    'χ', 
-    't', 
-    'j', 
-    'k', 
-    'l', 
-    'm', 
-    'n', 
-    's', 
-    'f', 
-    'p', 
-    'ts', 
-    'tʃ', 
-    'w',
-    'ʔ',
-    'ɡ',
-    'ʁ',
-    'ʃ',
-    'ʒ',
-    'dʒ',
-]
+VOWELS = 'a e i o u'.split(' ')
+CONSONANTS = "b v d h z χ t j k l m n s f p ts tʃ w ʔ ɡ ʁ ʃ ʒ dʒ".split(' ')
 
 GERESH = "'"
 GERSHAYIM = '"'
