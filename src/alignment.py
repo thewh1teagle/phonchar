@@ -58,43 +58,139 @@ def align_word(word: str, ipa: str) -> tuple[str, str]:
         matched = False
         phoneme_group = []
         
-        if ipa_idx < len(ipa):
-            # Try to match each possible phoneme (consonant) first
+        # SPECIAL CASE: For matres lectionis (ה,ו,י,ע,א) at second-to-last position
+        # OR for standalone gershayim/geresh before last char
+        # Check if the LAST character can match the remaining IPA instead
+        is_second_to_last = (word_idx + num_chars == len(word) - 1)
+        should_check_last_char = (
+            (is_second_to_last and char_key in ['ה', 'ו', 'י', 'ע', 'א']) or
+            (is_second_to_last and char_key == config.GERSHAYIM) or
+            (is_second_to_last and char_key == config.GERESH)
+        )
+        
+        if should_check_last_char and ipa_idx < len(ipa):
+            # Get the last character
+            last_char = word[-1]
+            last_char_phonemes = config.CHAR_TO_PHONEME.get(last_char, [])
+            
+            # Check if last character can match what's remaining in IPA
+            last_char_can_match = False
+            for last_phoneme in last_char_phonemes:
+                temp_idx = ipa_idx
+                
+                # Try various patterns for the last character
+                # Pattern 1: Just a standalone vowel
+                if temp_idx < len(ipa) and ipa[temp_idx] in VOWELS:
+                    last_char_can_match = True
+                    break
+                
+                # Pattern 2: [stress?] vowel consonant
+                if temp_idx < len(ipa) and ipa[temp_idx] == STRESS:
+                    temp_idx += 1
+                if temp_idx < len(ipa) and ipa[temp_idx] in VOWELS:
+                    if temp_idx + 1 + len(last_phoneme) <= len(ipa) and ipa[temp_idx + 1:temp_idx + 1 + len(last_phoneme)] == last_phoneme:
+                        last_char_can_match = True
+                        break
+                
+                # Pattern 3: [stress?] consonant [vowel?]
+                temp_idx = ipa_idx
+                if temp_idx < len(ipa) and ipa[temp_idx] == STRESS:
+                    temp_idx += 1
+                if temp_idx + len(last_phoneme) <= len(ipa) and ipa[temp_idx:temp_idx + len(last_phoneme)] == last_phoneme:
+                    last_char_can_match = True
+                    break
+            
+            # If last character can match, make current character silent
+            if last_char_can_match:
+                matched = True
+                phoneme_group.append(config.NONE)
+        
+        if not matched and ipa_idx < len(ipa):
+            # PRIORITY 1: Try to match VOWEL + CONSONANT pattern first
+            # This is critical for cases like "ha" where we want to consume both together
             for phoneme in possible_phonemes:
-                # Check if we're at a vowel position and the phoneme can come after it
-                start_idx = ipa_idx
-                if ipa_idx < len(ipa) and ipa[ipa_idx] in VOWELS:
-                    # Tentatively check if consonant follows the vowel
-                    temp_idx = ipa_idx + 1
-                    if temp_idx + len(phoneme) <= len(ipa) and ipa[temp_idx:temp_idx + len(phoneme)] == phoneme:
-                        # Vowel + consonant pattern: consume both
-                        phoneme_group.append(ipa[ipa_idx])
+                # Check for pattern: [stress?] + vowel + consonant
+                temp_idx = ipa_idx
+                
+                # Optional leading stress
+                has_stress = False
+                if temp_idx < len(ipa) and ipa[temp_idx] == STRESS:
+                    has_stress = True
+                    temp_idx += 1
+                
+                # Check for vowel + consonant pattern
+                if temp_idx < len(ipa) and ipa[temp_idx] in VOWELS:
+                    vowel_idx = temp_idx
+                    consonant_idx = temp_idx + 1
+                    
+                    # Check if consonant follows the vowel
+                    if consonant_idx + len(phoneme) <= len(ipa) and ipa[consonant_idx:consonant_idx + len(phoneme)] == phoneme:
+                        # Match! Consume [stress?] + vowel + consonant
+                        if has_stress:
+                            phoneme_group.append(STRESS)
+                            ipa_idx += 1
+                        phoneme_group.append(ipa[vowel_idx])
                         ipa_idx += 1
                         phoneme_group.append(phoneme)
                         ipa_idx += len(phoneme)
                         matched = True
                         break
-                
-                # Try to match consonant at current position
-                if ipa_idx + len(phoneme) <= len(ipa) and ipa[ipa_idx:ipa_idx + len(phoneme)] == phoneme:
-                    # Matched the consonant
-                    phoneme_group.append(phoneme)
-                    ipa_idx += len(phoneme)
-                    matched = True
+            
+            # PRIORITY 2: Try to match CONSONANT at current position (with optional trailing stress/vowel)
+            if not matched:
+                for phoneme in possible_phonemes:
+                    # Check for optional leading stress
+                    temp_idx = ipa_idx
+                    has_stress = False
+                    if temp_idx < len(ipa) and ipa[temp_idx] == STRESS:
+                        has_stress = True
+                        temp_idx += 1
                     
-                    # Consume stress markers and ONE vowel (not multiple)
-                    while ipa_idx < len(ipa):
-                        if ipa[ipa_idx] == STRESS:
+                    # Try to match consonant at current position
+                    if temp_idx + len(phoneme) <= len(ipa) and ipa[temp_idx:temp_idx + len(phoneme)] == phoneme:
+                        # Matched the consonant
+                        if has_stress:
                             phoneme_group.append(STRESS)
                             ipa_idx += 1
-                        elif ipa[ipa_idx] in VOWELS:
-                            # Consume only ONE vowel, then stop
-                            phoneme_group.append(ipa[ipa_idx])
-                            ipa_idx += 1
-                            break  # Stop after consuming one vowel
-                        else:
-                            break
-                    break
+                        phoneme_group.append(phoneme)
+                        ipa_idx += len(phoneme)
+                        matched = True
+                        
+                        # Consume trailing stress markers and ONE vowel (not multiple)
+                        while ipa_idx < len(ipa):
+                            if ipa[ipa_idx] == STRESS:
+                                phoneme_group.append(STRESS)
+                                ipa_idx += 1
+                            elif ipa[ipa_idx] in VOWELS:
+                                # Consume only ONE vowel, then stop
+                                phoneme_group.append(ipa[ipa_idx])
+                                ipa_idx += 1
+                                break  # Stop after consuming one vowel
+                            else:
+                                break
+                        break
+            
+            # If no consonant matched but there's a standalone vowel/stress, consume it
+            # Only do this if we're at the last character or if there's no consonant following
+            if not matched and ipa_idx < len(ipa):
+                # Check if there's a consonant later in the IPA that could match next character
+                has_upcoming_consonant = False
+                for i in range(ipa_idx, len(ipa)):
+                    if ipa[i] not in VOWELS and ipa[i] != STRESS:
+                        has_upcoming_consonant = True
+                        break
+                
+                # Only consume standalone stress/vowel if there's no upcoming consonant
+                # or if we're at the last character
+                if not has_upcoming_consonant or word_idx >= len(word) - num_chars:
+                    if ipa[ipa_idx] == STRESS:
+                        phoneme_group.append(STRESS)
+                        ipa_idx += 1
+                        matched = True
+                    if ipa_idx < len(ipa) and ipa[ipa_idx] in VOWELS:
+                        phoneme_group.append(ipa[ipa_idx])
+                        ipa_idx += 1
+                        matched = True
         
         # If special combination, assign phoneme to first char, Ø to second
         if is_special_combo:
