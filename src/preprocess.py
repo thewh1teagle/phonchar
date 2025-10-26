@@ -5,6 +5,8 @@ See https://en.wikipedia.org/wiki/Unicode_and_HTML_for_the_Hebrew_alphabet#Compa
 
 import unicodedata
 import re
+
+
 def normalize(text: str) -> str:
     """
     Normalize Hebrew text to Unicode NFD form
