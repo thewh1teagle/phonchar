@@ -2,7 +2,6 @@
 uv run pytest
 """
 
-from src.alignment import align_word
 import pandas as pd
 from pathlib import Path
 
@@ -17,6 +16,10 @@ def read_csv(path: str):
 
 
 def test_tables_valid():
+    """
+    Check that the word characters and segmented IPA have the same length
+    Example: assert len('לויתן') == len('li v ja tˈa n'.split(' '))
+    """
     for table in tables:
         df = read_csv(table)
         for _, row in df.iterrows():
