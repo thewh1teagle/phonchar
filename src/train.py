@@ -5,6 +5,8 @@ sudo apt install p7zip-full -y
 7z x hedc4-phonemes_v1.txt.7z
 head -n 200 hedc4-phonemes.txt > dataset.txt
 uv run python -m src.train --data dataset.txt
+
+uv run python -m src.train --data dataset_aligned.txt --epochs 1 --batch-size 2
 """
 import argparse
 from pathlib import Path
@@ -326,17 +328,18 @@ def main():
         warmup_steps=500,
         weight_decay=0.01,
         logging_dir=str(output_dir / 'logs'),
-        logging_steps=100,
-        eval_strategy='epoch' if val_dataset else 'no',
+        logging_steps=10,  # Log every 10 steps (was 100)
+        logging_first_step=True,  # Log the first step
+        eval_strategy='no',  # Skip evaluation for now
         save_strategy='epoch',
         save_total_limit=3,
-        load_best_model_at_end=True if val_dataset else False,
-        metric_for_best_model='overall_accuracy' if val_dataset else None,
-        greater_is_better=True,
+        load_best_model_at_end=False,  # Can't load best without eval
         seed=args.seed,
         fp16=torch.cuda.is_available(),
         report_to='tensorboard',  # Enable TensorBoard logging
         remove_unused_columns=False,  # Keep our custom columns
+        disable_tqdm=False,  # Keep progress bar enabled
+        logging_nan_inf_filter=False,  # Show all values
     )
     
     # Initialize trainer
@@ -344,10 +347,10 @@ def main():
         model=model,
         args=training_args,
         train_dataset=train_dataset,
-        eval_dataset=val_dataset,
+        eval_dataset=None,  # Skip eval for now
         data_collator=data_collator,
-        compute_metrics=compute_metrics if val_dataset else None,
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=3)] if val_dataset else None,
+        compute_metrics=None,  # Skip metrics computation
+        callbacks=None,  # Skip callbacks
     )
     
     # Train
@@ -364,14 +367,6 @@ def main():
     print("Training Complete!")
     print("=" * 60)
     print(f"Final loss: {train_result.training_loss:.4f}")
-    
-    if val_dataset:
-        print("\nEvaluating on validation set...")
-        eval_results = trainer.evaluate()
-        print("Validation Results:")
-        for key, value in eval_results.items():
-            if 'accuracy' in key or key in ['wer', 'cer']:
-                print(f"  {key}: {value:.4f}")
     
     print(f"\nModel saved to: {output_dir / 'final'}")
     print("=" * 60)

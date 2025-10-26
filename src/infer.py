@@ -1,5 +1,7 @@
 """
 Inference script for phoneme prediction
+
+uv run python -m src.infer --model ./output/final
 """
 import argparse
 import sys
@@ -45,8 +47,9 @@ def main():
         with open(args.input, 'r', encoding='utf-8') as f:
             sentences = [line.strip() for line in f if line.strip()]
     else:
-        print("Reading from stdin (Ctrl+D to finish)...", file=sys.stderr)
-        sentences = [line.strip() for line in sys.stdin if line.strip()]
+        # Default to example Hebrew text
+        sentences = ["בוא תרד לאכול, יש בורקס עם תרד!"]
+        print("Using default text: שלום עולם", file=sys.stderr)
     
     if not sentences:
         print("No input provided.", file=sys.stderr)
