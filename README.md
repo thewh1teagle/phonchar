@@ -1,6 +1,6 @@
 # phonchar
 
-Fast per character phoneme classification
+Fast per character phoneme classification (G2P)
 
 inputs: `אבגדהוזחטיכךלמםנןסעפףצץקרשת`
 
