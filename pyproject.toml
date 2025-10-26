@@ -5,6 +5,7 @@ description = "Fast per character phoneme classification (G2P)"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "datasets>=4.3.0",
     "jiwer>=4.0.0",
     "pandas>=2.3.3",
     "torch>=2.9.0",
