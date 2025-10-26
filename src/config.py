@@ -78,6 +78,6 @@ CHAR_TO_PHONEME = {
     f"ג{GERESH}": ["dʒ"],
     f"ז{GERESH}": ["ʒ"],
     f"צ{GERESH}": ['tʃ'],
-    f"ץ{GERSHAYIM}": ['tʃ'],
+    f"ץ{GERESH}": ['tʃ'],
     f"ת{GERESH}": ['t'],
 }
